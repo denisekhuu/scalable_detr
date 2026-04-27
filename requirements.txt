@@ -1,0 +1,7 @@
+cython
+submitit
+pycocotools
+scipy
+onnx
+onnxruntime
+mlflow
