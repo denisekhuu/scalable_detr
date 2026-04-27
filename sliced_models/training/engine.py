@@ -83,9 +83,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     model.eval()
     criterion.eval()
 
-    # Build the list of head configs to evaluate.
-    # If `heads` is provided, evaluate for each; otherwise fall back to a
-    # single run with `effective_heads` (which may be None = full model).
     heads_to_eval = heads if heads is not None else [effective_heads]
 
     iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())

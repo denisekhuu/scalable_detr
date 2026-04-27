@@ -44,7 +44,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
-        # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = utils.reduce_dict(loss_dict)
         loss_dict_reduced_unscaled = {f'{k}_unscaled': v
                                       for k, v in loss_dict_reduced.items()}
@@ -71,7 +70,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         metric_logger.update(loss=loss_value, **loss_dict_reduced_scaled, **loss_dict_reduced_unscaled)
         metric_logger.update(class_error=loss_dict_reduced['class_error'])
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
-    # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
@@ -83,9 +81,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     model.eval()
     criterion.eval()
 
-    # Build the list of head configs to evaluate.
-    # If `heads` is provided, evaluate for each; otherwise fall back to a
-    # single run with `effective_heads` (which may be None = full model).
     heads_to_eval = heads if heads is not None else [effective_heads]
 
     iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())

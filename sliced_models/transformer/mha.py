@@ -287,7 +287,6 @@ class SlicedMultiheadAttention(MultiheadAttention):
         )
 
         if self.batch_first and is_batched:
-            # make sure that the transpose op does not affect the "is" property
             if key is value:
                 if query is key:
                     query = key = value = query.transpose(1, 0)

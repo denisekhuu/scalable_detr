@@ -13,7 +13,6 @@ from torch.overrides import (
 if TYPE_CHECKING:
     from torch.types import _dtype as DType
 else:
-    # The JIT doesn't understand Union, nor torch.dtype here
     DType = int
 
 try:
@@ -138,9 +137,8 @@ def _in_projection_packed(
     E = q.size(-1)
     if k is v:
         if q is k:
-            # self-attention
+
             proj = linear(q, w, b)
-            # reshape to 3, E and not E, 3 is deliberate for better memory coalescing and keeping same order as chunk()
             proj = (
                 proj.unflatten(-1, (3, E))
                 .unsqueeze(0)
@@ -150,7 +148,6 @@ def _in_projection_packed(
             )
             return proj[0], proj[1], proj[2]
         else:
-            # encoder-decoder attention
             w_q, w_kv = w.split([E, E * 2])
             if b is None:
                 b_q = b_kv = None
@@ -158,7 +155,7 @@ def _in_projection_packed(
                 b_q, b_kv = b.split([E, E * 2])
             q_proj = linear(q, w_q, b_q)
             kv_proj = linear(k, w_kv, b_kv)
-            # reshape to 2, E and not E, 2 is deliberate for better memory coalescing and keeping same order as chunk()
+        
             kv_proj = (
                 kv_proj.unflatten(-1, (2, E))
                 .unsqueeze(0)
@@ -215,16 +212,15 @@ def _select_heads_projection(
         raise ValueError(f"effective_heads must be a positive integer, but got {effective_heads}")  
     actual_embed_dim = effective_heads * head_dim
     
-    # reduce view to the selected head's input channels [L, B, num_heads, head_dim]
     q = q[:, :, :actual_embed_dim]
     k = k[:, :, :actual_embed_dim]
     v = v[:, :, :actual_embed_dim]
     
-    # reduce weights: select only the first effective_heads output rows and first red_dim input columns
+    
     w_q = w_q.view(num_heads, head_dim, embed_dim)[:effective_heads, :, :actual_embed_dim].reshape(actual_embed_dim, actual_embed_dim)
     w_k = w_k.view(num_heads, head_dim, embed_dim)[:effective_heads, :, :actual_embed_dim].reshape(actual_embed_dim, actual_embed_dim)
     w_v = w_v.view(num_heads, head_dim, embed_dim)[:effective_heads, :, :actual_embed_dim   ].reshape(actual_embed_dim, actual_embed_dim)
-    # reduce biases
+
     if b_q is not None:
         b_q = b_q[:actual_embed_dim].reshape(-1)
     if b_k is not None: 
@@ -267,22 +263,18 @@ def _select_heads_projection_packed(
         return _in_projection_packed(q, k, v, w, b)  
     
     if not torch.jit.is_scripting() and not torch.jit.is_tracing():
-        # During eager mode, we can perform checks on effective_heads.
         if effective_heads is not None and effective_heads <= 0:
             raise ValueError(f"effective_heads must be a positive integer, but got {effective_heads}")      
         
     actual_embed_dim = effective_heads * head_dim
     
-    # First reduce input tensors to selected heads
     q = q[:, :, :actual_embed_dim]
     k = k[:, :, :actual_embed_dim]
     v = v[:, :, :actual_embed_dim]
     
-    # Reshape weights to select heads - extract weights for selected heads only
     w = w.view(3, num_heads, head_dim, embed_dim)
     w = w[:, :effective_heads, :, :actual_embed_dim].reshape(3 * actual_embed_dim, actual_embed_dim)
     
-    # reduce biases
     if b is not None:
         b = b.view(3, num_heads, head_dim)
         b = b[:, :effective_heads, :].reshape(3 * actual_embed_dim)
@@ -477,21 +469,15 @@ def multi_head_attention_forward(
         query, key, value, key_padding_mask, attn_mask, num_heads
     )
 
-    # For unbatched input, we unsqueeze at the expected batch-dim to pretend that the input
-    # is batched, run the computation and before returning squeeze the
-    # batch dimension so that the output doesn't carry this temporary batch dimension.
     if not is_batched:
-        # unsqueeze if the input is unbatched
         query = query.unsqueeze(1)
         key = key.unsqueeze(1)
         value = value.unsqueeze(1)
         if key_padding_mask is not None:
             key_padding_mask = key_padding_mask.unsqueeze(0)
 
-    # set up shape vars
     tgt_len, bsz, q_embed_dim = query.shape
 
-    # Set default to embed_dim from query if not provided
     embed_dim = original_embed_dim if original_embed_dim is not None else q_embed_dim
     src_len, _, _ = key.shape
 
@@ -511,9 +497,6 @@ def multi_head_attention_forward(
         )
 
     if is_causal and key_padding_mask is None and not need_weights:
-        # when we have a kpm or need weights, we need attn_mask
-        # Otherwise, we use the is_causal hint go as is_causal
-        # indicator to SDPA.
         attn_mask = None
     else:
         attn_mask = _canonical_mask(
@@ -526,9 +509,6 @@ def multi_head_attention_forward(
         )
 
         if key_padding_mask is not None:
-            # We have the attn_mask, and use that to merge kpm into it.
-            # Turn off use of is_causal hint, as the merged mask is no
-            # longer causal.
             is_causal = False
 
 
@@ -537,7 +517,6 @@ def multi_head_attention_forward(
     )
 
     if isinstance(embed_dim, torch.Tensor):
-        # embed_dim can be a tensor when JIT tracing
         head_dim = embed_dim.div(num_heads, rounding_mode="trunc")
     else:
         head_dim = embed_dim // num_heads
@@ -546,8 +525,6 @@ def multi_head_attention_forward(
     )
 
     if torch.jit.is_scripting():
-        # During scripting, we don't have access to the actual value of effective_heads, so we can't check it against num_heads.
-        # Instead, we check that if effective_heads is provided, it is a positive integer.
         if effective_heads is not None:
             assert isinstance(effective_heads, int) and effective_heads > 0, (
                 f"effective_heads must be a positive integer, but got {effective_heads}"
@@ -557,14 +534,12 @@ def multi_head_attention_forward(
                 f"effective_heads {effective_heads} must be less than or equal to num_heads {num_heads}"
             )
 
-    # variables to contol the dimensions of effective heads
     effective_heads = effective_heads if effective_heads is not None else num_heads
     actual_embed_dim = effective_heads * head_dim
 
     
     if not torch.jit.is_scripting() and not torch.jit.is_tracing():
         if use_separate_proj_weight:
-            # allow MHA to have different embedding dimensions when separate projection weights are used
             assert key.shape[:2] == value.shape[:2], (
                 f"key's sequence and batch dims {key.shape[:2]} do not match value's {value.shape[:2]}"
             )
@@ -573,9 +548,6 @@ def multi_head_attention_forward(
                 f"key shape {key.shape} does not match value shape {value.shape}"
             )
 
-    #
-    # compute in-projection
-    #
     if not use_separate_proj_weight:
         assert in_proj_weight is not None, (
             "use_separate_proj_weight is False but in_proj_weight is None"
@@ -638,10 +610,7 @@ def multi_head_attention_forward(
                 b_v,
             )
 
-    # prep attention mask
-
     if attn_mask is not None:
-        # ensure attn_mask's dim is 3
         if attn_mask.dim() == 2:
             correct_2d_size = (tgt_len, src_len)
             if attn_mask.shape != correct_2d_size:
@@ -660,7 +629,6 @@ def multi_head_attention_forward(
                 f"attn_mask's dimension {attn_mask.dim()} is not supported"
             )
 
-    # add bias along batch dimension (currently second)
     if bias_k is not None and bias_v is not None:
         assert static_k is None, "bias cannot be added to static key."
         assert static_v is None, "bias cannot be added to static value."
@@ -674,10 +642,7 @@ def multi_head_attention_forward(
         assert bias_k is None
         assert bias_v is None
 
-    #
-    # reshape q, k, v for multihead attention and make them batch first
-    # add option to reduce number of heads used using effective_heads
-    #
+
     q = q.view(tgt_len, bsz * effective_heads, head_dim).transpose(0, 1) # (bsz * effective_heads, tgt_len, head_dim)
     if static_k is None:
         k = k.view(k.shape[0], bsz * effective_heads, head_dim).transpose(0, 1)
@@ -716,10 +681,8 @@ def multi_head_attention_forward(
         if key_padding_mask is not None:
             key_padding_mask = pad(key_padding_mask, (0, 1))
 
-    # update source sequence length after adjustments
     src_len = k.size(1)
 
-    # merge key padding and attention masks
     if key_padding_mask is not None:
         if not torch.jit.is_scripting() and not torch.jit.is_tracing():
             _check_key_padding_mask(key_padding_mask, src_len, bsz)
@@ -734,17 +697,13 @@ def multi_head_attention_forward(
         else:
             attn_mask = attn_mask + key_padding_mask
 
-    # adjust dropout probability
     if not training:
         dropout_p = 0.0
 
-    #
-    # (deep breath) calculate attention and out projection
-    #
 
     if need_weights:
         _B, _Nt, E = q.shape
-        q_scaled = q * math.sqrt(1.0 / E)  # avoid float() cast on shape value (TracerWarning)
+        q_scaled = q * math.sqrt(1.0 / E) 
 
         assert not (is_causal and attn_mask is None), (
             "FIXME: is_causal not implemented for need_weights"
@@ -767,28 +726,21 @@ def multi_head_attention_forward(
             attn_output.transpose(0, 1).contiguous().view(tgt_len * bsz, actual_embed_dim)
         )
         
-        # Adjust out_proj_weight if effective_heads is specified
         if effective_heads is not None and effective_heads < num_heads:
             attn_output = _select_heads_output_projection(attn_output, out_proj_weight, out_proj_bias, actual_embed_dim)
         else:
             attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
         
         attn_output = attn_output.view(tgt_len, bsz, attn_output.size(1))
-
-        # optionally average attention weights over heads
         attn_output_weights = attn_output_weights.view(bsz, effective_heads, tgt_len, src_len)
         if average_attn_weights:
             attn_output_weights = attn_output_weights.mean(dim=1)
 
         if not is_batched:
-            # squeeze the output if input was unbatched
             attn_output = attn_output.squeeze(1)
             attn_output_weights = attn_output_weights.squeeze(0)
         return attn_output, attn_output_weights
     else:
-        # attn_mask can be either (L,S) or (N*num_heads, L, S)
-        # if attn_mask's shape is (1, L, S) we need to unsqueeze to (1, 1, L, S)
-        # in order to match the input for SDPA of (N, num_heads, L, S)
         if attn_mask is not None:
             if attn_mask.size(0) == 1 and attn_mask.dim() == 3:
                 attn_mask = attn_mask.unsqueeze(0)
@@ -799,7 +751,6 @@ def multi_head_attention_forward(
         k = k.view(bsz, effective_heads, src_len, head_dim)
         v = v.view(bsz, effective_heads, src_len, head_dim)
 
-        # change mask shape.
         attn_output = scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal
         )
@@ -810,6 +761,5 @@ def multi_head_attention_forward(
         attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
         attn_output = attn_output.view(tgt_len, bsz, attn_output.size(1))
         if not is_batched:
-            # squeeze the output if input was unbatched
             attn_output = attn_output.squeeze(1)
         return attn_output, None

@@ -1,9 +1,6 @@
 # this is the main entrypoint
 # as we describe in the paper, we compute the flops over the first 100 images
 # on COCO val2017, and report the average result
-import sys
-sys.path.append('C:\\workspace\\ml\\workspace\\master\\original\\detr')
-sys.path.append('C:\\workspace\\ml\\workspace\\master\\original\\detr\\evaluation\\flops')
 from pathlib import Path
 
 import json

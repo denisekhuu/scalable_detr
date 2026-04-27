@@ -79,20 +79,17 @@ def bmm_flop_jit(inputs, outputs):
 
 
 def basic_binary_op_flop_jit(inputs, outputs, name):
-    # Try to get shapes, handling cases where some inputs may not be tensors
     input_shapes = []
     for v in inputs:
         try:
             input_shapes.append(get_shape(v))
         except ValueError:
-            # Skip inputs that don't have valid shapes
             continue
     
     if not input_shapes:
         # If no valid inputs, return zero flops
         return Counter({name: 0})
-    
-    # for broadcasting
+
     input_shapes = [s[::-1] for s in input_shapes]
     max_shape = np.array(list(zip_longest(*input_shapes, fillvalue=1))).max(1)
     flop = prod(max_shape)
@@ -205,8 +202,6 @@ def einsum_flop_jit(
         input_shapes_jit = inputs[1].node().inputs()  # pyre-ignore
         input_shapes = [get_shape(v) for v in input_shapes_jit]
     else:
-        # Some inputs (e.g. dynamically-sliced weights) may not have a static
-        # shape in JIT; collect what we can and store None for unknown shapes.
         input_shapes = []
         for v in inputs[1:]:
             try:
@@ -285,8 +280,6 @@ def matmul_flop_jit(
         Counter: A Counter dictionary that records the number of flops for each
             operation.
     """
-    # Inputs should be a list of length 2.
-    # Inputs contains the shapes of two matrices.
     input_shapes = [get_shape(v) for v in inputs]
     assert len(input_shapes) == 2
     a, b = input_shapes[0], input_shapes[1]
