@@ -1,18 +1,16 @@
-import  sys
-sys.path.append('C:\\workspace\\ml\\workspace\\master\\original')
-sys.path.append('C:\\workspace\\ml\\workspace\\master\\original\\detr')
+
 import torch
 import json
 from pathlib import Path
 
-import detr.util.misc as utils
+import util.misc as utils
 from torch.utils.data import DataLoader
 
-from detr.datasets import build_dataset, get_coco_api_from_dataset
-from detr.sliced_models import build_model
-from detr.sliced_models.training.engine import evaluate as evaluate_sliced
+from datasets import build_dataset, get_coco_api_from_dataset
+from sliced_models import build_model
+from sliced_models.training.engine import evaluate as evaluate_sliced
 
-model_name = "4heads_sliced_checkpoint0119"
+model_name = "4heads_sliced"
 
 def make_serializable(obj):
     import numpy as np
@@ -28,7 +26,7 @@ def make_serializable(obj):
         return [make_serializable(v) for v in obj]
     return obj
 
-from args import HeadArgs
+from evaluation.args import HeadArgs
 
 import logging
 logging.basicConfig(level=logging.INFO)

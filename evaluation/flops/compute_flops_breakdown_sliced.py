@@ -17,7 +17,7 @@ from util.misc import nested_tensor_from_tensor_list
 from flop_count import flop_count
 from models.backbone import build_backbone
 from sliced_models.transformer.transformer import build_transformer
-from workspace.master.original.detr.evaluation.args import HeadArgs
+from evaluation.args import HeadArgs
 from torch import nn
 from sliced_models.layers.conv import SlicedConv2d
 

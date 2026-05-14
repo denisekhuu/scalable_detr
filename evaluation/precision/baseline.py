@@ -2,18 +2,13 @@ import torch
 import json
 from pathlib import Path
 
-import detr.util.misc as utils
+import util.misc as utils
 from torch.utils.data import DataLoader
 
-from detr.datasets import build_dataset, get_coco_api_from_dataset
-from detr.models import build_model
-from detr.engine import evaluate 
-
-import sys
-sys.path.append(str(Path(__file__).parent))
-sys.path.append(str(Path(__file__).parent.parent))
-
-from args import HeadArgs
+from datasets import build_dataset, get_coco_api_from_dataset
+from models import build_model
+from engine import evaluate 
+from evaluation.args import HeadArgs
 
 def make_serializable(obj):
     import numpy as np
@@ -29,7 +24,6 @@ def make_serializable(obj):
         return [make_serializable(v) for v in obj]
     return obj
 
-from working.utils.args.one_head_args import HeadArgs
 
 import logging
 logging.basicConfig(level=logging.INFO)
