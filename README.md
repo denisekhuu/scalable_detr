@@ -14,7 +14,7 @@ two variants of DETR, namely Depth-Scalable DETR (DS-DETR) and Width-Scalable DE
 **DEpth scalable DETR for dynamic depth** provides a flexible transformer-based detector that can adjust the depth (number of transformer encoder and decoder layers) dynamically. This variant allows efficient scaling by controlling computational complexity through the number of transformer layers.
 
 ### WS-DETR (Width Scalable DETR)
-**Width SCalable DETR with dynamic width based on weight matrix slicing** enables width scaling through  weight matrix slicing. The model can dynamically adjust the width (number of attention heads).
+**Width Scalable DETR with dynamic width based on weight matrix slicing** enables width scaling through  weight matrix slicing. The model can dynamically adjust the width (number of attention heads).
 
 
 ## System Requirements
@@ -123,7 +123,6 @@ The following table shows performance with increasing transformer decoder depth:
 1. **Width Slicing Performance**: WS-DETR shows consistent AP degradation (-0.1 to -0.12) compared to baseline
 2. **Depth Saturation**: Performance plateaus beyond 5 layers with minimal improvement
 3. **Training Time**: 600-epoch models require significantly longer training
-4. **Memory Usage**: Base GMACs remain relatively constant across configurations
 
 ---
 
