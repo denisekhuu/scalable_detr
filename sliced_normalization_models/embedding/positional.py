@@ -10,17 +10,6 @@ import math
 import torch
 from torch import nn
 
-from util.misc import NestedTensor
-
-
-
-import torch
-from torch import nn
-import math
-
-import torch
-from torch import nn
-import math
 class PositionEmbeddingSine(nn.Module):
     """
     This is a more standard version of the position embedding, very similar to the one
