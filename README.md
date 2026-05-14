@@ -11,7 +11,7 @@ two variants of DETR, namely Depth-Scalable DETR (DS-DETR) and Width-Scalable DE
 ## Models Overview
 
 ### DS-DETR (Depth Scalable DETR)
-**DEpth scalable DETR for dynamic depth** provides a flexible transformer-based detector that can adjust the depth (number of transformer encoder and decoder layers) dynamically. This variant allows efficient scaling by controlling computational complexity through the number of transformer layers.
+**Depth Scalable DETR for dynamic depth** provides a flexible transformer-based detector that can adjust the depth (number of transformer encoder and decoder layers) dynamically. This variant allows efficient scaling by controlling computational complexity through the number of transformer layers.
 
 ### WS-DETR (Width Scalable DETR)
 **Width Scalable DETR with dynamic width based on weight matrix slicing** enables width scaling through  weight matrix slicing. The model can dynamically adjust the width (number of attention heads).
