@@ -334,20 +334,13 @@ def linear_flop_jit(
     Returns:
         Counter: A Counter dictionary that records the number of flops.
     """
-    # aten::linear has inputs: input, weight, bias
     input_shape = get_shape(inputs[0])
     weight_shape = get_shape(inputs[1])
     
-    # input_shape: [..., in_features]
-    # weight_shape: [out_features, in_features]
-    # output_shape: [..., out_features]
-    
-    # Number of elements is all dimensions except the last one of input
     num_instances = prod(input_shape[:-1])
     in_features = input_shape[-1]
     out_features = weight_shape[0]
     
-    # Each output element is a dot product: in_features multiplications
     flop = num_instances * in_features * out_features
     flop_counter = Counter({"linear": flop})
     return flop_counter
@@ -370,17 +363,10 @@ def baddbmm_flop_jit(
         mat1_shape = get_shape(inputs[1])   # mat1
         mat2_shape = get_shape(inputs[2])   # mat2
         
-        # Expected shapes:
-        # input: [b, n, m]
-        # mat1: [b, n, p]
-        # mat2: [b, p, m]
-        # output: [b, n, m]
         
         if len(mat1_shape) == 3 and len(mat2_shape) == 3:
             b, n, p = mat1_shape
             m = mat2_shape[-1]
-            # Matrix multiplication: b * n * p * m
-            # Addition: b * n * m
             flop = b * n * p * m + b * n * m
             flop_counter = Counter({"baddbmm": flop})
             return flop_counter
@@ -405,7 +391,6 @@ def layer_norm_flop_jit(
     """
     try:
         input_shape = get_shape(inputs[0])
-        # For layer norm, we count: 4 ops per element (mean, var, norm, scale)
         flop = prod(input_shape) * 4
         flop_counter = Counter({"layer_norm": flop})
         return flop_counter
@@ -455,7 +440,6 @@ def layer_norm_flop_jit(
     """
     try:
         input_shape = get_shape(inputs[0])
-        # For layer norm, we count: 4 ops per element (mean, var, norm, scale)
         flop = prod(input_shape) * 4
         flop_counter = Counter({"layer_norm": flop})
         return flop_counter

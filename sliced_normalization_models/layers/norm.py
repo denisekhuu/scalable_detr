@@ -15,15 +15,6 @@ class SlicedGroupNorm(LayerNorm):
             raise ValueError(f"max_embed_dim {self.max_embed_dim} must be divisible by number_slice {self.number_slice} to ensure equal slice dimensions.")
     
     def forward(self, input: Tensor, effective_embed_dim: int = None) -> Tensor:
-        """
-        Applies Layer Normalization over a mini-batch of inputs with optional slicing of the embedding dimension.
-        For each slice, normalization is applied individually.
-        Args:
-            input (Tensor): Input tensor of shape (..., embedding_dim).
-            effective_embed_dim (int, optional): If provided, slice the input tensor to this embedding dimension before applying LayerNorm.
-        Returns:
-            Tensor: The normalized tensor.
-        """
         k = self.max_embed_dim if effective_embed_dim is None else effective_embed_dim
         if k % self.slice_dim != 0 or k > self.max_embed_dim:
             raise ValueError(f"effective_embed_dim {k} must be a multiple of slice_dim {self.slice_dim} and <= max_embed_dim {self.max_embed_dim}")
@@ -52,9 +43,6 @@ class SlicedGroupNorm(LayerNorm):
         weight_key = prefix + 'weight'
         bias_key = prefix + 'bias'
         
-        # If the checkpoint contains weights/bias but this layer was created 
-        # with elementwise_affine=False, we remove them from the state_dict 
-        # to prevent "Unexpected key" errors.
         if not self.elementwise_affine:
             state_dict.pop(weight_key, None)
             state_dict.pop(bias_key, None)
