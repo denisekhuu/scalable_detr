@@ -17,10 +17,6 @@ from sliced_normalization_models.training.engine import train_one_epoch, evaluat
 from sliced_normalization_models import build_model
 import datetime
 
-#python sliced_main.py --temp --hidden_dim 128 --dim_feedforward 1024 --nheads 4 --batch_size 2 --epochs 1 --lr_drop 1 --output_dir ../temp/temp_output --coco_path C:/workspace/ml/data/coco --resume https://dl.fbaipublicfiles.com/detr/detr-r50-e632da11.pth --eval
-#python sliced_normalization_main.py --temp --hidden_dim 128 --dim_feedforward 1024 --nheads 4 --batch_size 2 --epochs 1 --lr_drop 1 --output_dir ../temp/temp_output --coco_path C:/workspace/ml/data/coco --eval
-#python sliced_normalization_main.py --hidden_dim 128 --dim_feedforward 1024 --nheads 4 --batch_size 2 --epochs 1 --lr_drop 1 --output_dir ../temp/temp_output --coco_path C:/workspace/ml/data/coco
-
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
     parser.add_argument('--lr', default=1e-4, type=float)
