@@ -1,4 +1,10 @@
+# ------------------------------------------------------------------------
+# Copyright 2026 Denise-Phi Khuu. All Rights Reserved
+# ------------------------------------------------------------------------
+# Extended from PyTorch (https://github.com/pytorch/pytorch)
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# ------------------------------------------------------------------------
+
 """
 Train and eval functions used in main.py
 """

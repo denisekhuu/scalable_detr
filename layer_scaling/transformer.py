@@ -1,11 +1,13 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-"""
-DETR Transformer class.
+# ------------------------------------------------------------------------
+# Copyright 2026 Denise-Phi Khuu. All Rights Reserved
 
-Copy-paste from torch.nn.Transformer with modifications:
-    * positional encodings are passed in MHattention
-    * extra LN at the end of encoder is removed
-    * decoder returns a stack of activations from all decoding layers
+# ------------------------------------------------------------------------
+# Extended from PyTorch (https://github.com/pytorch/pytorch)
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# ------------------------------------------------------------------------
+
+"""
+DS-DETR Transformer class.
 """
 import copy
 from typing import Optional, List
