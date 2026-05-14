@@ -83,7 +83,7 @@ The following table compares performance across different numbers of attention h
 
 ### Depth Scaling Comparison (Layers)
 
-The following table shows performance with increasing transformer decoder depth:
+The following table shows performance with increasing transformer depth:
 
 | Layers | Layer AP | Layer-600 AP |  Layer GMACs | 
 |--------|----------|--------------|--------------|
