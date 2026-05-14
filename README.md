@@ -100,7 +100,6 @@ The following table shows performance with increasing transformer depth:
 
 ### Backbone
 - ResNet-50 pre-trained on ImageNet
-- Feature maps: C3, C4, C5
 
 ### Encoder
 - Multi-scale feature processing
