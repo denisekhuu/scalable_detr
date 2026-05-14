@@ -47,7 +47,7 @@ GPU count: 1
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 # Clone repository
-git clone 
+git clone https://github.com/denisekhuu/scalable_detr
 cd scalable-detr
 ```
 
